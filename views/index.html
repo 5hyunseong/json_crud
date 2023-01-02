@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<!-- 
+    database에 userid,id 구분하고 name은 필요 없으니 버릴 것 
+    /create에 이름 정확히 확인할 것 
+ -->
+
+<body>
+    <div class="form-container">
+        <input type="text" id="userid" name="userid" placeholder="userid">
+        <input type="text" id="username" name="username" placeholder="username">
+        <input type="text" id="useremail" name="useremail" placeholder="useremail">
+        <input type="text" id="userphone" name="userphone" placeholder="userphone">
+    </div>
+    <div class="btn-container">
+        <button class="list">목록보기</button>
+        <button class="filter">검색목록확인</button>
+        <button class="create">가입하기</button>
+        <button class="update">수정</button>
+        <button class="delete">삭제</button>
+    </div>
+    <div class="message">
+        <table>
+            <!-- <tr>
+                <td>id</td>
+                <td>name</td>
+                <td>username</td>
+                <td>email</td>
+                <td>phone</td>
+            </tr> -->
+        </table>
+
+    </div>
+    <script>
+
+        async function lists() {
+            try {
+                const res = await fetch('http://localhost:3000/list');
+                const users = await res.json();
+                console.log(users);
+                if (!users.success) throw err;
+                let tableFunction = '';
+                for (let res of users.data) {
+                    tableFunction += `
+                    <tr>
+                        <td>${res.id}</td>
+                        <td>${res.userid}</td>
+                        <td>${res.username}</td>
+                        <td>${res.useremail}</td>
+                        <td>${res.userphone}</td>
+                    </tr>
+                `;
+                }
+                document.querySelector('.message>table').innerHTML = tableFunction;
+            } catch (err) {
+                console.log(err);
+            }
+
+        }
+
+        lists();
+
+        const list = document.querySelector('.list');
+        list.addEventListener('click', () => {
+            lists('http://localhost:3000/list');
+        })
+
+        const filter = document.querySelector('.filter');
+        filter.addEventListener('click', () => {
+            // 아이디 값을 가져와서 화면에 뿌리기 
+            // 기본 fetch에 아이디 필터로 섞기 
+            let userid = document.querySelector('#userid').value;
+            console.log(userid);
+            const filterUrl = `http://localhost:3000/filter/${userid}`
+            filterLists(filterUrl);
+        })
+
+        // 검색 오류를 console에 찎음
+        async function filterLists(url) {
+            try {
+                const res = await fetch(url);
+                const users = await res.json();
+                console.log('my', users.data.userid)
+                if (!users.success) {
+                    new Error(user.message);
+                    alert(users.message)
+                }
+
+                let tableFunction = `
+                        <tr>
+                            <td>${users.data.id}</td>
+                            <td>${users.data.userid}</td>
+                            <td>${users.data.username}</td>
+                            <td>${users.data.useremail}</td>
+                            <td>${users.data.userphone}</td>
+                        </tr>
+                    `;
+
+                blurHandle();
+                document.querySelector('.message>table').innerHTML = tableFunction;
+            } catch (err) {
+                console.log(err.message)
+            }
+        }
+
+        // delete 배열, 변수, 객체속성 : 삭제
+        const deleteBtn = document.querySelector('.delete');
+        deleteBtn.addEventListener('click', async () => {
+            let userid = document.querySelector('#userid').value;
+            const deleteUrl = `http://localhost:3000/delete`;
+
+            const res = await fetch(`http://localhost:3000/delete`, {
+                method: 'POST',
+                headers: { 'content-Type': 'application/json' },
+                body: JSON.stringify({ userid })
+            })
+            const data = await res.json();
+            if (data.success) alert(data.message);
+            else alert(data.message)
+            lists();
+            blurHandle();
+        })
+
+        const create = document.querySelector('.create');
+        create.addEventListener('click', async () => {
+            let userid = document.querySelector('#userid').value;
+            const createUrl = `http://localhost:3000/create`;
+
+            // 새로입력할때는 유일한 값이 되도록 만들어 주어야함
+            // db저장하는 상황이면 autoincrement : 자동으로 번호를 카운트
+            let email = document.querySelector('#useremail').value;
+            let userphone = document.querySelector('#userphone').value;
+            // 객체의 속성값과 value가 같으면 생략하고 사용할 수 있음
+            const res = await fetch(createUrl,
+                {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        userid: document.querySelector('#userid').value,
+                        username: username.value,
+                        useremail: email,
+                        userphone
+                    }),
+                    headers: {
+                        'Content-type': 'application/json; charset=UTF-8',
+                    },
+                })
+            const resdata = await res.json()
+            lists();
+            blurHandle();
+            if (resdata.success) alert(resdata.message);
+            else alert(resdata.message);
+
+        })
+
+        function blurHandle() {
+            userid.value = '';
+            username.value = '';
+            useremail.value = '';
+            userphone.value = '';
+        }
+
+        const update = document.querySelector('.update');
+        update.addEventListener('click', async () => {
+            let userid = document.querySelector('#userid').value;
+            const updateUrl = `http://localhost:3000/update`;
+
+            //id 가 있는 것을 수정하는 것이나
+            // 객체를 만드는 방법은 create와 동일함
+            let useremail = document.querySelector('#useremail').value;
+            let userphone = document.querySelector('#userphone').value;
+            // 객체의 속성값과 value가 같으면 생략하고 사용할 수 있음
+            const res = await fetch(updateUrl,
+                {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        userid: document.querySelector('#userid').value,
+                        username: username.value,
+                        useremail: useremail,
+                        userphone
+                    }),
+                    headers: {
+                        'Content-type': 'application/json; charset=UTF-8',
+                    },
+                })
+            const resData = await res.json();
+
+            console.log(resData);
+
+            if (resData.success) alert(resData.message);
+            else alert(resData.message)
+            lists();
+            blurHandle();
+        });
+
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // document.cookie : 문자열
+            if (document.cookie.includes('ok')) alert('로그인');
+            console.log(document.cookie.includes('ok'))
+        })
+
+        // 로그아웃
+    </script>
+</body>
+
+</html>
